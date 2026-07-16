@@ -1,0 +1,39 @@
+name: Build for Linux (Ubuntu/WSL)
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Install dependencies (APT)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build git build-essential autoconf automake libtool
+
+    - name: Configure and Build
+      run: |
+        # Patch para omitir tests y evitar error de CUnit
+        sed -i 's/add_subdirectory(tests)/# add_subdirectory(tests)/' CMakeLists.txt
+        
+        # Configurar y compilar
+        cmake -S examples/client/udp -B build-client-udp -GNinja
+        cmake --build build-client-udp
+
+    - name: Upload lwm2mclient binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: lwm2mclient-linux
+        path: build-client-udp/lwm2mclient
+        if-no-files-found: error
