@@ -1,0 +1,43 @@
+name: Build for Windows
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Setup Ninja
+      uses: seanmiddleditch/gha-setup-ninja@v5
+
+    - name: Configure and Build
+      shell: cmd
+      run: |
+        :: Inicializar el entorno de Visual Studio para compilación de 64 bits
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || ^
+        call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+        
+        :: Configurar con CMake usando el generador de Ninja
+        cmake -S examples/client/udp -B build-client-udp -GNinja
+        cmake --build build-client-udp
+
+    - name: Upload lwm2mclient binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: lwm2mclient-windows
+        path: build-client-udp/lwm2mclient.exe
+        if-no-files-found: error
