@@ -27,12 +27,14 @@ jobs:
     - name: Configure and Build
       shell: cmd
       run: |
-        :: Inicializar el entorno de Visual Studio para compilación de 64 bits
+        :: Inicializar el entorno de Visual Studio
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || ^
         call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
         
-        :: Configurar con CMake usando el generador de Ninja
-        cmake -S examples/client/udp -B build-client-udp -GNinja
+        :: Configurar con CMake: -DBUILD_TESTING=OFF deshabilita la búsqueda de CUnit
+        cmake -S examples/client/udp -B build-client-udp -GNinja -DBUILD_TESTING=OFF
+        
+        :: Compilar
         cmake --build build-client-udp
 
     - name: Upload lwm2mclient binary
