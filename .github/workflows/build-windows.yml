@@ -31,15 +31,14 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || ^
         call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
         
-        :: 1. Excluimos la carpeta de tests explícitamente para evitar que se procese el CMakeLists.txt que busca CUnit
-        :: 2. Usamos -DBUILD_TESTING=OFF por precaución
-        cmake -S examples/client/udp -B build-client-udp -GNinja -DBUILD_TESTING=OFF
+        :: Patch: Comentar la línea que añade el subdirectorio 'tests' en el archivo principal
+        :: Esto evita el error de CUnit sin borrar la carpeta ni romper la estructura
+        powershell -Command "(Get-Content CMakeLists.txt) -replace 'add_subdirectory\(tests\)', '# add_subdirectory(tests)' | Set-Content CMakeLists.txt"
         
-        :: Si el paso anterior sigue fallando por la estructura del proyecto, 
-        :: podemos forzar la omisión de la carpeta de tests borrándola antes de configurar:
-        rd /s /q tests
+        :: Configurar con CMake
+        cmake -S examples/client/udp -B build-client-udp -GNinja
         
-        cmake -S examples/client/udp -B build-client-udp -GNinja -DBUILD_TESTING=OFF
+        :: Compilar
         cmake --build build-client-udp
 
     - name: Upload lwm2mclient binary
