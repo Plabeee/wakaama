@@ -31,10 +31,15 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || ^
         call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
         
-        :: Configurar con CMake: -DBUILD_TESTING=OFF deshabilita la búsqueda de CUnit
+        :: 1. Excluimos la carpeta de tests explícitamente para evitar que se procese el CMakeLists.txt que busca CUnit
+        :: 2. Usamos -DBUILD_TESTING=OFF por precaución
         cmake -S examples/client/udp -B build-client-udp -GNinja -DBUILD_TESTING=OFF
         
-        :: Compilar
+        :: Si el paso anterior sigue fallando por la estructura del proyecto, 
+        :: podemos forzar la omisión de la carpeta de tests borrándola antes de configurar:
+        rd /s /q tests
+        
+        cmake -S examples/client/udp -B build-client-udp -GNinja -DBUILD_TESTING=OFF
         cmake --build build-client-udp
 
     - name: Upload lwm2mclient binary
